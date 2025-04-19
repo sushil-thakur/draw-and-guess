@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io({ transports: ['polling', 'websocket'] });
 let isDrawing = false;
 let isDrawer = false;
 let username;
@@ -13,13 +13,27 @@ const playerList = document.getElementById('player-list');
 const guessInput = document.getElementById('guess-input');
 const colorPicker = document.getElementById('color');
 const colorPickerContainer = document.getElementById('color-picker');
+const turnNotification = document.getElementById('turn-notification');
+
+socket.on('connect', () => {
+  console.log('Connected to Socket.IO server');
+});
+socket.on('connect_error', (err) => {
+  console.log('Socket.IO connection error:', err.message);
+});
 
 function joinGame() {
+  console.log('joinGame called');
   username = document.getElementById('username').value.trim();
+  console.log('Username:', username);
   if (username) {
+    console.log('Emitting join event');
     socket.emit('join', username);
-    document.getElementById('join-screen').style.display = 'none';
-    document.getElementById('game-screen').style.display = 'flex';
+    document.getElementById('join-screen').classList.add('hidden');
+    document.getElementById('game-screen').classList.remove('hidden');
+  } else {
+    console.log('No username entered');
+    alert('Please enter a username');
   }
 }
 
@@ -49,6 +63,29 @@ canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    draw(x, y);
+    socket.emit('draw', { x, y, color: colorPicker.value });
+  }
+});
+
+canvas.addEventListener('touchstart', (e) => {
+  if (isDrawer) {
+    e.preventDefault();
+    isDrawing = true;
+  }
+});
+
+canvas.addEventListener('touchend', () => {
+  isDrawing = false;
+  ctx.beginPath();
+});
+
+canvas.addEventListener('touchmove', (e) => {
+  if (isDrawing && isDrawer) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const x = e.touches[0].clientX - rect.left;
+    const y = e.touches[0].clientY - rect.top;
     draw(x, y);
     socket.emit('draw', { x, y, color: colorPicker.value });
   }
@@ -85,7 +122,8 @@ function triggerConfetti() {
 }
 
 socket.on('playerList', (players) => {
-  playerList.innerHTML = players.map(p => `<li>${p.username}: ${p.score}</li>`).join('');
+  console.log('Player list received:', players);
+  playerList.innerHTML = players.map(p => `<li class="text-gray-700">${p.username}: ${p.score}</li>`).join('');
   if (players.length < 2) {
     wordDisplay.textContent = 'Waiting for more players...';
     timerDisplay.textContent = '';
@@ -103,9 +141,12 @@ socket.on('newRound', ({ drawer, word }) => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   isDrawer = drawer.id === socket.id;
   wordDisplay.textContent = isDrawer ? `Word: ${word}` : 'Guess the word!';
-  colorPickerContainer.style.display = isDrawer ? 'block' : 'none';
+  colorPickerContainer.classList.toggle('hidden', !isDrawer);
   canvas.style.pointerEvents = isDrawer ? 'auto' : 'none';
   canvas.classList.toggle('active', isDrawer);
+  turnNotification.textContent = `${drawer.username}'s turn to draw!`;
+  turnNotification.classList.remove('hidden');
+  setTimeout(() => turnNotification.classList.add('hidden'), 3000);
   startTimer();
 });
 

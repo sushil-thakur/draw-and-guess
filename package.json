@@ -4,14 +4,13 @@
     "description": "A multiplayer drawing and guessing game",
     "main": "server.js",
     "scripts": {
-        "start": "node server.js"
+      "start": "node server.js"
     },
     "dependencies": {
-        "express": "^4.17.1",
-        "socket.io": "^4.8.1"
+      "express": "^4.17.1",
+      "socket.io": "^4.5.0"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "type": "commonjs"
-}
+    "engines": {
+      "node": ">=14.0.0"
+    }
+  }
