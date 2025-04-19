@@ -1,0 +1,17 @@
+{
+    "name": "draw-and-guess",
+    "version": "1.0.0",
+    "description": "A multiplayer drawing and guessing game",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "express": "^4.17.1",
+        "socket.io": "^4.8.1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs"
+}
