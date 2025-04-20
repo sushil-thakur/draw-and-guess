@@ -1,17 +1,16 @@
 const express = require('express');
-const serverless = require('serverless-http');
-const { Server } = require('socket.io');
-
 const app = express();
-const server = new Server({
+const http = require('http').createServer(app);
+const io = require('socket.io')(http, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST']
   },
   transports: ['polling']
 });
+const path = require('path');
 
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const words = [
   'lion', 'elephant', 'giraffe', 'shark', 'panda', 'eagle', 'snake', 'dolphin', 'kangaroo', 'octopus',
@@ -40,11 +39,11 @@ function startNewRound() {
   currentDrawerIndex = (currentDrawerIndex + 1) % players.length;
   const currentDrawer = players[currentDrawerIndex];
   currentWord = getRandomWord();
-  server.emit('newRound', { drawer: currentDrawer, word: currentWord });
+  io.emit('newRound', { drawer: currentDrawer, word: currentWord });
   gameInterval = setTimeout(startNewRound, 60000);
 }
 
-server.on('connection', (socket) => {
+io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
   socket.on('join', (username) => {
@@ -52,7 +51,7 @@ server.on('connection', (socket) => {
     const player = { id: socket.id, username, score: 0 };
     players.push(player);
     socket.emit('playerList', players);
-    server.emit('message', `${username} joined the game!`);
+    io.emit('message', `${username} joined the game!`);
     socket.broadcast.emit('playerList', players);
     if (players.length === 2 && currentDrawerIndex === 0) startNewRound();
   });
@@ -62,13 +61,13 @@ server.on('connection', (socket) => {
   });
 
   socket.on('guess', (guess) => {
-    server.emit('message', `${players.find(p => p.id === socket.id).username}: ${guess}`);
+    io.emit('message', `${players.find(p => p.id === socket.id).username}: ${guess}`);
     if (guess.toLowerCase() === currentWord.toLowerCase() && socket.id !== players[currentDrawerIndex].id) {
       const player = players.find(p => p.id === socket.id);
       player.score += 10;
-      server.emit('message', `${player.username} guessed correctly! +10 points`);
-      server.emit('playerList', players);
-      server.emit('correctGuess');
+      io.emit('message', `${player.username} guessed correctly! +10 points`);
+      io.emit('playerList', players);
+      io.emit('correctGuess');
       clearTimeout(gameInterval);
       startNewRound();
     }
@@ -78,8 +77,8 @@ server.on('connection', (socket) => {
     const player = players.find(p => p.id === socket.id);
     if (player) {
       players = players.filter(p => p.id !== socket.id);
-      server.emit('message', `${player.username} left the game.`);
-      server.emit('playerList', players);
+      io.emit('message', `${player.username} left the game.`);
+      io.emit('playerList', players);
       if (players.length < 2) {
         clearTimeout(gameInterval);
         currentDrawerIndex = 0;
@@ -94,8 +93,7 @@ server.on('connection', (socket) => {
   });
 });
 
-// Netlify Functions handler
-exports.handler = serverless(app);
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-// Attach Socket.IO to the serverless handler
-exports.handler.io = server;
+module.exports = app;

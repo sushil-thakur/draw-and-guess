@@ -1,3 +1,4 @@
+// Initialize variables at the top
 let username = '';
 let isDrawing = false;
 let isDrawer = false;
@@ -5,6 +6,7 @@ let timeLeft = 60;
 let lastDrawTime = 0;
 const DEBOUNCE_TIME = 50; // Debounce mousemove events (ms)
 
+// Socket initialization (will work once Socket.IO script loads)
 const socket = io({ transports: ['polling'] });
 
 const canvas = document.getElementById('canvas');
