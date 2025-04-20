@@ -1,11 +1,12 @@
+// Initialize socket at the top
+const socket = io({ transports: ['polling'] });
+
 let username = '';
 let isDrawing = false;
 let isDrawer = false;
 let timeLeft = 60;
 let lastDrawTime = 0;
 const DEBOUNCE_TIME = 50; // Debounce mousemove events (ms)
-
-const socket = io({ transports: ['polling'] });
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
