@@ -132,7 +132,7 @@ function draw(data) {
   if (data.action === 'start') {
     ctx.beginPath();
     ctx.moveTo(data.x, data.y);
-    ctx BradstrokeStyle = data.color;
+    ctx.strokeStyle = data.color; // Fixed typo: 'BradstrokeStyle' to 'strokeStyle'
   } else if (data.action === 'move') {
     ctx.strokeStyle = data.color;
     ctx.lineTo(data.x, data.y);
