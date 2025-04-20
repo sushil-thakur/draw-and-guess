@@ -5,33 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Draw and Guess</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex items-center justify-center">
-  <div id="game-container" class="bg-white rounded-2xl shadow-2xl p-6 max-w-4xl w-full mx-4 transform transition-all duration-500">
-    <h1 class="text-4xl font-bold text-center text-indigo-600 mb-6">Draw and Guess</h1>
-    <div id="join-screen" class="flex flex-col gap-4 max-w-sm mx-auto">
-      <input type="text" id="username" placeholder="Enter your username" class="p-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors">
-      <button onclick="joinGame()" class="p-3 text-lg bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Join Game</button>
+<body>
+  <div id="game-container">
+    <h1>Draw and Guess</h1>
+    <div id="join-screen">
+      <input type="text" id="username" placeholder="Enter your username">
+      <button onclick="joinGame()">Join Game</button>
     </div>
-    <div id="game-screen" class="hidden flex gap-6">
-      <div id="canvas-container" class="relative">
-        <div id="turn-notification" class="absolute top-4 left-4 bg-yellow-400 text-black px-4 py-2 rounded-lg font-semibold animate-pulse hidden"></div>
-        <canvas id="canvas" width="600" height="400" class="border-4 border-gray-200 rounded-lg shadow-inner"></canvas>
-        <div id="color-picker" class="absolute top-4 right-4 hidden">
-          <input type="color" id="color" value="#000000" class="w-12 h-12 rounded-full cursor-pointer">
+    <div id="game-screen" class="hidden">
+      <div id="canvas-container">
+        <div id="turn-notification" class="hidden"></div>
+        <canvas id="canvas" width="600" height="400"></canvas>
+        <div id="color-picker" class="hidden">
+          <input type="color" id="color" value="#000000">
         </div>
-        <div id="word-display" class="text-2xl font-bold text-center mt-4 text-gray-800"></div>
-        <div id="timer" class="text-lg text-center mt-2 text-gray-600"></div>
+        <div id="word-display"></div>
+        <div id="timer"></div>
       </div>
-      <div id="sidebar" class="w-72 flex flex-col gap-4">
-        <h2 class="text-xl font-semibold text-indigo-600">Players</h2>
-        <ul id="player-list" class="list-none p-0 max-h-48 overflow-y-auto"></ul>
-        <h2 class="text-xl font-semibold text-indigo-600">Chat</h2>
-        <div id="chat" class="border border-gray-300 rounded-lg p-4 bg-gray-50 h-48 overflow-y-auto"></div>
-        <input type="text" id="guess-input" placeholder="Enter your guess" class="p-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 transition-colors">
-        <button onclick="sendGuess()" class="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Guess</button>
+      <div id="sidebar">
+        <h2>Players</h2>
+        <ul id="player-list"></ul>
+        <h2>Chat</h2>
+        <div id="chat"></div>
+        <input type="text" id="guess-input" placeholder="Enter your guess">
+        <button onclick="sendGuess()">Guess</button>
       </div>
     </div>
   </div>

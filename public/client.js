@@ -1,8 +1,11 @@
-const socket = io({ transports: ['polling', 'websocket'] });
+let username = '';
 let isDrawing = false;
 let isDrawer = false;
-let username;
 let timeLeft = 60;
+let lastDrawTime = 0;
+const DEBOUNCE_TIME = 50; // Debounce mousemove events (ms)
+
+const socket = io({ transports: ['polling'] });
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -49,22 +52,37 @@ guessInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') sendGuess();
 });
 
-canvas.addEventListener('mousedown', () => {
-  if (isDrawer) isDrawing = true;
+canvas.addEventListener('mousedown', (e) => {
+  if (isDrawer) {
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    socket.emit('draw', { action: 'start', x, y, color: colorPicker.value });
+  }
 });
 
 canvas.addEventListener('mouseup', () => {
-  isDrawing = false;
-  ctx.beginPath();
+  if (isDrawer && isDrawing) {
+    isDrawing = false;
+    ctx.beginPath();
+    socket.emit('draw', { action: 'end' });
+  }
 });
 
 canvas.addEventListener('mousemove', (e) => {
   if (isDrawing && isDrawer) {
+    const now = Date.now();
+    if (now - lastDrawTime < DEBOUNCE_TIME) return;
+    lastDrawTime = now;
+
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    draw(x, y);
-    socket.emit('draw', { x, y, color: colorPicker.value });
+    draw({ action: 'move', x, y, color: colorPicker.value });
+    socket.emit('draw', { action: 'move', x, y, color: colorPicker.value });
   }
 });
 
@@ -72,22 +90,35 @@ canvas.addEventListener('touchstart', (e) => {
   if (isDrawer) {
     e.preventDefault();
     isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.touches[0].clientX - rect.left;
+    const y = e.touches[0].clientY - rect.top;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    socket.emit('draw', { action: 'start', x, y, color: colorPicker.value });
   }
 });
 
 canvas.addEventListener('touchend', () => {
-  isDrawing = false;
-  ctx.beginPath();
+  if (isDrawer && isDrawing) {
+    isDrawing = false;
+    ctx.beginPath();
+    socket.emit('draw', { action: 'end' });
+  }
 });
 
 canvas.addEventListener('touchmove', (e) => {
   if (isDrawing && isDrawer) {
     e.preventDefault();
+    const now = Date.now();
+    if (now - lastDrawTime < DEBOUNCE_TIME) return;
+    lastDrawTime = now;
+
     const rect = canvas.getBoundingClientRect();
     const x = e.touches[0].clientX - rect.left;
     const y = e.touches[0].clientY - rect.top;
-    draw(x, y);
-    socket.emit('draw', { x, y, color: colorPicker.value });
+    draw({ action: 'move', x, y, color: colorPicker.value });
+    socket.emit('draw', { action: 'move', x, y, color: colorPicker.value });
   }
 });
 
@@ -95,12 +126,18 @@ colorPicker.addEventListener('change', () => {
   ctx.strokeStyle = colorPicker.value;
 });
 
-function draw(x, y, color = ctx.strokeStyle) {
-  ctx.strokeStyle = color;
-  ctx.lineTo(x, y);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x, y);
+function draw(data) {
+  if (data.action === 'start') {
+    ctx.beginPath();
+    ctx.moveTo(data.x, data.y);
+    ctx.strokeStyle = data.color;
+  } else if (data.action === 'move') {
+    ctx.strokeStyle = data.color;
+    ctx.lineTo(data.x, data.y);
+    ctx.stroke();
+  } else if (data.action === 'end') {
+    ctx.beginPath();
+  }
 }
 
 function startTimer() {
@@ -123,7 +160,7 @@ function triggerConfetti() {
 
 socket.on('playerList', (players) => {
   console.log('Player list received:', players);
-  playerList.innerHTML = players.map(p => `<li class="text-gray-700">${p.username}: ${p.score}</li>`).join('');
+  playerList.innerHTML = players.map(p => `<li>${p.username}: ${p.score}</li>`).join('');
   if (players.length < 2) {
     wordDisplay.textContent = 'Waiting for more players...';
     timerDisplay.textContent = '';
@@ -150,8 +187,8 @@ socket.on('newRound', ({ drawer, word }) => {
   startTimer();
 });
 
-socket.on('draw', ({ x, y, color }) => {
-  draw(x, y, color);
+socket.on('draw', (data) => {
+  draw(data);
 });
 
 socket.on('correctGuess', () => {

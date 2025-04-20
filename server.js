@@ -6,7 +6,7 @@ const io = require('socket.io')(http, {
     origin: '*',
     methods: ['GET', 'POST']
   },
-  transports: ['polling', 'websocket']
+  transports: ['polling']
 });
 const path = require('path');
 
@@ -36,7 +36,7 @@ function getRandomWord() {
 
 function startNewRound() {
   if (players.length < 2) return;
-  currentDrawerIndex = (currentDrawerIndex + 1) % players.length; // Cycle through players
+  currentDrawerIndex = (currentDrawerIndex + 1) % players.length;
   const currentDrawer = players[currentDrawerIndex];
   currentWord = getRandomWord();
   io.emit('newRound', { drawer: currentDrawer, word: currentWord });
